@@ -40,10 +40,14 @@ export default function RiverPanel({
         </p>
       </div>
 
-      <section className="panel-section">
+      <section className="panel-section panel-section--presets">
         <div className="section-heading">
           <h2>View presets</h2>
-          <button type="button" className="ghost-button" onClick={onFocusJamaica}>
+          <button
+            type="button"
+            className="ghost-button panel-action"
+            onClick={onFocusJamaica}
+          >
             Fit Jamaica
           </button>
         </div>
@@ -54,7 +58,7 @@ export default function RiverPanel({
               type="button"
               role="tab"
               aria-selected={preset.id === activePresetId}
-              className="preset-button"
+              className="preset-button panel-card-button"
               data-active={preset.id === activePresetId}
               onClick={() => onChoosePreset(preset.id)}
             >
@@ -65,7 +69,7 @@ export default function RiverPanel({
         </div>
       </section>
 
-      <section className="panel-section">
+      <section className="panel-section panel-section--metrics">
         <h2>Dataset readout</h2>
         {isLoading ? (
           <p className="status-message">Loading river geometry and summary data...</p>
@@ -93,12 +97,12 @@ export default function RiverPanel({
         ) : null}
       </section>
 
-      <section className="panel-section">
+      <section className="panel-section panel-section--selection">
         <div className="section-heading">
           <h2>Selection</h2>
           <button
             type="button"
-            className="ghost-button"
+            className="ghost-button panel-action"
             onClick={onFocusSelection}
             disabled={!selectedRiver}
           >
@@ -138,7 +142,7 @@ export default function RiverPanel({
       </section>
 
       {summary ? (
-        <section className="panel-section">
+        <section className="panel-section panel-section--segments">
           <h2>Longest sampled segments</h2>
           <ol className="segment-list">
             {summary.longestSegments.slice(0, 6).map((segment) => (
