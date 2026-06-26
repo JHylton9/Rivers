@@ -86,17 +86,25 @@ interface PopupInfo {
   river: RiverFeature['properties'];
 }
 
-const jamaicaInteractionBounds = [
-  [jamaicaBounds[0] - 1.15, jamaicaBounds[1] - 0.8],
-  [jamaicaBounds[2] + 1.15, jamaicaBounds[3] + 0.8]
+const jamaicaNavigationBounds = [
+  [jamaicaBounds[0] - 4.5, jamaicaBounds[1] - 3.5],
+  [jamaicaBounds[2] + 4.5, jamaicaBounds[3] + 3.5]
 ] as const;
 
 function getMapPadding() {
   if (window.innerWidth < 900) {
-    return { top: 40, right: 24, bottom: 340, left: 24 };
+    return { top: 24, right: 24, bottom: 24, left: 24 };
   }
 
-  return { top: 40, right: 40, bottom: 40, left: 340 };
+  return { top: 36, right: 36, bottom: 36, left: 36 };
+}
+
+function getSelectionPadding() {
+  if (window.innerWidth < 900) {
+    return { top: 40, right: 40, bottom: 40, left: 40 };
+  }
+
+  return { top: 56, right: 56, bottom: 56, left: 56 };
 }
 
 function getJamaicaFitBounds(summary: RiverSummary) {
@@ -248,7 +256,7 @@ export default function App() {
 
     mapRef.current.fitBounds(getFeatureBounds(selectedFeature), {
       duration: 1000,
-      padding: getMapPadding()
+      padding: getSelectionPadding()
     });
   }
 
@@ -296,8 +304,8 @@ export default function App() {
             latitude: jamaicaCenter[1],
             zoom: 8
           }}
-          maxBounds={jamaicaInteractionBounds}
-          minZoom={6}
+          maxBounds={jamaicaNavigationBounds}
+          minZoom={5.8}
           renderWorldCopies={false}
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}

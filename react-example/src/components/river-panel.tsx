@@ -48,7 +48,7 @@ export default function RiverPanel({
             className="ghost-button panel-action"
             onClick={onFocusJamaica}
           >
-            Fit Jamaica
+            Reset view
           </button>
         </div>
         <div className="preset-list" role="tablist" aria-label="River views">
