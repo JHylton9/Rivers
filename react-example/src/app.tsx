@@ -86,12 +86,24 @@ interface PopupInfo {
   river: RiverFeature['properties'];
 }
 
-function getPadding() {
+const jamaicaInteractionBounds = [
+  [jamaicaBounds[0] - 1.15, jamaicaBounds[1] - 0.8],
+  [jamaicaBounds[2] + 1.15, jamaicaBounds[3] + 0.8]
+] as const;
+
+function getMapPadding() {
   if (window.innerWidth < 900) {
     return { top: 40, right: 24, bottom: 340, left: 24 };
   }
 
-  return { top: 48, right: 48, bottom: 48, left: 420 };
+  return { top: 40, right: 40, bottom: 40, left: 340 };
+}
+
+function getJamaicaFitBounds(summary: RiverSummary) {
+  return [
+    [summary.bounds[0], summary.bounds[1]],
+    [summary.bounds[2], summary.bounds[3]]
+  ] as const;
 }
 
 function getPresetFilter(presetId: string) {
@@ -204,16 +216,10 @@ export default function App() {
       return;
     }
 
-    mapRef.current.fitBounds(
-      [
-        [summary.bounds[0], summary.bounds[1]],
-        [summary.bounds[2], summary.bounds[3]]
-      ],
-      {
-        duration: 1200,
-        padding: getPadding()
-      }
-    );
+    mapRef.current.fitBounds(getJamaicaFitBounds(summary), {
+      duration: 1200,
+      padding: getMapPadding()
+    });
     hasFitBounds.current = true;
   }, [summary]);
 
@@ -229,16 +235,10 @@ export default function App() {
       return;
     }
 
-    mapRef.current.fitBounds(
-      [
-        [summary.bounds[0], summary.bounds[1]],
-        [summary.bounds[2], summary.bounds[3]]
-      ],
-      {
-        duration: 1000,
-        padding: getPadding()
-      }
-    );
+    mapRef.current.fitBounds(getJamaicaFitBounds(summary), {
+      duration: 1000,
+      padding: getMapPadding()
+    });
   }
 
   function focusSelection() {
@@ -248,7 +248,7 @@ export default function App() {
 
     mapRef.current.fitBounds(getFeatureBounds(selectedFeature), {
       duration: 1000,
-      padding: getPadding()
+      padding: getMapPadding()
     });
   }
 
@@ -296,11 +296,9 @@ export default function App() {
             latitude: jamaicaCenter[1],
             zoom: 8
           }}
-          maxBounds={[
-            [jamaicaBounds[0] - 0.35, jamaicaBounds[1] - 0.22],
-            [jamaicaBounds[2] + 0.35, jamaicaBounds[3] + 0.22]
-          ]}
-          minZoom={6.5}
+          maxBounds={jamaicaInteractionBounds}
+          minZoom={6}
+          renderWorldCopies={false}
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}
           onClick={handleMapClick}
