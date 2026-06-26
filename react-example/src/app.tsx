@@ -7,7 +7,7 @@ import {
   Source,
   type MapRef
 } from '@vis.gl/react-maplibre';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import RiverPanel from './components/river-panel';
 import {
@@ -173,6 +173,7 @@ export default function App() {
   const hasFitBounds = useRef(false);
   const [activePresetId, setActivePresetId] = useState('all');
   const [error, setError] = useState<string | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [riverData, setRiverData] = useState<RiverFeatureCollection | null>(null);
   const [summary, setSummary] = useState<RiverSummary | null>(null);
@@ -219,18 +220,6 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!summary || !mapRef.current || hasFitBounds.current) {
-      return;
-    }
-
-    mapRef.current.fitBounds(getJamaicaFitBounds(summary), {
-      duration: 1200,
-      padding: getMapPadding()
-    });
-    hasFitBounds.current = true;
-  }, [summary]);
-
   const selectedRiver = selectedPopup?.river ?? null;
   const selectedFeature = getRiverFeature(
     riverData,
@@ -238,15 +227,37 @@ export default function App() {
   );
   const highlightedRiverId = hoveredRiverId ?? selectedPopup?.river.riverId ?? -1;
 
-  function focusJamaica() {
-    if (!summary || !mapRef.current) {
+  const resetJamaicaView = useCallback((duration: number) => {
+    const map = mapRef.current?.getMap();
+
+    if (!summary || !map) {
       return;
     }
 
-    mapRef.current.fitBounds(getJamaicaFitBounds(summary), {
-      duration: 1000,
+    map.resize();
+    map.fitBounds(getJamaicaFitBounds(summary), {
+      duration,
       padding: getMapPadding()
     });
+  }, [summary]);
+
+  useEffect(() => {
+    if (!summary || !isMapReady || hasFitBounds.current) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      resetJamaicaView(1200);
+      hasFitBounds.current = true;
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isMapReady, resetJamaicaView, summary]);
+
+  function focusJamaica() {
+    resetJamaicaView(1000);
   }
 
   function focusSelection() {
@@ -310,6 +321,9 @@ export default function App() {
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}
           onClick={handleMapClick}
+          onLoad={() => {
+            setIsMapReady(true);
+          }}
           onMouseLeave={() => {
             setHoveredRiverId(null);
             const canvas = mapRef.current?.getCanvas();
