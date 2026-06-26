@@ -7,7 +7,7 @@ import {
   Source,
   type MapRef
 } from '@vis.gl/react-maplibre';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import RiverPanel from './components/river-panel';
 import {
@@ -86,12 +86,50 @@ interface PopupInfo {
   river: RiverFeature['properties'];
 }
 
-function getPadding() {
+const jamaicaNavigationBounds = [
+  [jamaicaBounds[0] - 4.5, jamaicaBounds[1] - 3.5],
+  [jamaicaBounds[2] + 4.5, jamaicaBounds[3] + 3.5]
+] as const;
+const jamaicaResetInset = {
+  latitude: 0.34,
+  longitude: 0.46
+} as const;
+
+function getMapPadding() {
   if (window.innerWidth < 900) {
-    return { top: 40, right: 24, bottom: 340, left: 24 };
+    return { top: 24, right: 24, bottom: 24, left: 24 };
   }
 
-  return { top: 48, right: 48, bottom: 48, left: 420 };
+  return { top: 36, right: 36, bottom: 36, left: 36 };
+}
+
+function getSelectionPadding() {
+  if (window.innerWidth < 900) {
+    return { top: 40, right: 40, bottom: 40, left: 40 };
+  }
+
+  return { top: 56, right: 56, bottom: 56, left: 56 };
+}
+
+function getJamaicaFitOffset() {
+  if (window.innerWidth < 900) {
+    return [0, 0] as const;
+  }
+
+  return [0, -24] as const;
+}
+
+function getJamaicaFitBounds(summary: RiverSummary) {
+  return [
+    [
+      summary.bounds[0] - jamaicaResetInset.longitude,
+      summary.bounds[1] - jamaicaResetInset.latitude
+    ],
+    [
+      summary.bounds[2] + jamaicaResetInset.longitude,
+      summary.bounds[3] + jamaicaResetInset.latitude
+    ]
+  ] as const;
 }
 
 function getPresetFilter(presetId: string) {
@@ -153,6 +191,7 @@ export default function App() {
   const hasFitBounds = useRef(false);
   const [activePresetId, setActivePresetId] = useState('all');
   const [error, setError] = useState<string | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [riverData, setRiverData] = useState<RiverFeatureCollection | null>(null);
   const [summary, setSummary] = useState<RiverSummary | null>(null);
@@ -199,24 +238,6 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!summary || !mapRef.current || hasFitBounds.current) {
-      return;
-    }
-
-    mapRef.current.fitBounds(
-      [
-        [summary.bounds[0], summary.bounds[1]],
-        [summary.bounds[2], summary.bounds[3]]
-      ],
-      {
-        duration: 1200,
-        padding: getPadding()
-      }
-    );
-    hasFitBounds.current = true;
-  }, [summary]);
-
   const selectedRiver = selectedPopup?.river ?? null;
   const selectedFeature = getRiverFeature(
     riverData,
@@ -224,21 +245,38 @@ export default function App() {
   );
   const highlightedRiverId = hoveredRiverId ?? selectedPopup?.river.riverId ?? -1;
 
-  function focusJamaica() {
-    if (!summary || !mapRef.current) {
+  const resetJamaicaView = useCallback((duration: number) => {
+    const map = mapRef.current?.getMap();
+
+    if (!summary || !map) {
       return;
     }
 
-    mapRef.current.fitBounds(
-      [
-        [summary.bounds[0], summary.bounds[1]],
-        [summary.bounds[2], summary.bounds[3]]
-      ],
-      {
-        duration: 1000,
-        padding: getPadding()
-      }
-    );
+    map.resize();
+    map.fitBounds(getJamaicaFitBounds(summary), {
+      duration,
+      offset: getJamaicaFitOffset(),
+      padding: getMapPadding()
+    });
+  }, [summary]);
+
+  useEffect(() => {
+    if (!summary || !isMapReady || hasFitBounds.current) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      resetJamaicaView(1200);
+      hasFitBounds.current = true;
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isMapReady, resetJamaicaView, summary]);
+
+  function focusJamaica() {
+    resetJamaicaView(1000);
   }
 
   function focusSelection() {
@@ -248,7 +286,7 @@ export default function App() {
 
     mapRef.current.fitBounds(getFeatureBounds(selectedFeature), {
       duration: 1000,
-      padding: getPadding()
+      padding: getSelectionPadding()
     });
   }
 
@@ -296,14 +334,15 @@ export default function App() {
             latitude: jamaicaCenter[1],
             zoom: 8
           }}
-          maxBounds={[
-            [jamaicaBounds[0] - 0.35, jamaicaBounds[1] - 0.22],
-            [jamaicaBounds[2] + 0.35, jamaicaBounds[3] + 0.22]
-          ]}
-          minZoom={6.5}
+          maxBounds={jamaicaNavigationBounds}
+          minZoom={4.9}
+          renderWorldCopies={false}
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}
           onClick={handleMapClick}
+          onLoad={() => {
+            setIsMapReady(true);
+          }}
           onMouseLeave={() => {
             setHoveredRiverId(null);
             const canvas = mapRef.current?.getCanvas();
