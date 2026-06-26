@@ -91,16 +91,16 @@ const jamaicaNavigationBounds = [
   [jamaicaBounds[2] + 4.5, jamaicaBounds[3] + 3.5]
 ] as const;
 const jamaicaResetInset = {
-  latitude: 0.34,
-  longitude: 0.46
+  latitude: 0.16,
+  longitude: 0.2
 } as const;
 
 function getMapPadding() {
   if (window.innerWidth < 900) {
-    return { top: 24, right: 24, bottom: 24, left: 24 };
+    return { top: 18, right: 18, bottom: 18, left: 18 };
   }
 
-  return { top: 36, right: 36, bottom: 36, left: 36 };
+  return { top: 28, right: 28, bottom: 28, left: 28 };
 }
 
 function getSelectionPadding() {
@@ -112,11 +112,7 @@ function getSelectionPadding() {
 }
 
 function getJamaicaFitOffset() {
-  if (window.innerWidth < 900) {
-    return [0, 0] as const;
-  }
-
-  return [0, -24] as const;
+  return [0, 0] as const;
 }
 
 function getJamaicaFitBounds(summary: RiverSummary) {
@@ -193,6 +189,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapMinZoom, setMapMinZoom] = useState(5.8);
   const [riverData, setRiverData] = useState<RiverFeatureCollection | null>(null);
   const [summary, setSummary] = useState<RiverSummary | null>(null);
   const [hoveredRiverId, setHoveredRiverId] = useState<number | null>(null);
@@ -253,10 +250,23 @@ export default function App() {
     }
 
     map.resize();
-    map.fitBounds(getJamaicaFitBounds(summary), {
-      duration,
+
+    const resetCamera = map.cameraForBounds(getJamaicaFitBounds(summary), {
       offset: getJamaicaFitOffset(),
       padding: getMapPadding()
+    });
+
+    if (!resetCamera?.center || resetCamera.zoom === undefined) {
+      return;
+    }
+
+    map.setMinZoom(resetCamera.zoom);
+    setMapMinZoom(resetCamera.zoom);
+
+    map.easeTo({
+      center: resetCamera.center,
+      duration,
+      zoom: resetCamera.zoom
     });
   }, [summary]);
 
@@ -272,6 +282,27 @@ export default function App() {
 
     return () => {
       window.cancelAnimationFrame(frame);
+    };
+  }, [isMapReady, resetJamaicaView, summary]);
+
+  useEffect(() => {
+    if (!summary || !isMapReady) {
+      return;
+    }
+
+    let frame = 0;
+    const handleResize = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        resetJamaicaView(0);
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', handleResize);
     };
   }, [isMapReady, resetJamaicaView, summary]);
 
@@ -326,87 +357,100 @@ export default function App() {
         summary={summary}
       />
 
-      <div className="map-stage">
-        <Map
-          ref={mapRef}
-          initialViewState={{
-            longitude: jamaicaCenter[0],
-            latitude: jamaicaCenter[1],
-            zoom: 8
-          }}
-          maxBounds={jamaicaNavigationBounds}
-          minZoom={4.9}
-          renderWorldCopies={false}
-          mapStyle={mapStyleUrl}
-          interactiveLayerIds={['river-main']}
-          onClick={handleMapClick}
-          onLoad={() => {
-            setIsMapReady(true);
-          }}
-          onMouseLeave={() => {
-            setHoveredRiverId(null);
-            const canvas = mapRef.current?.getCanvas();
-            if (canvas) {
-              canvas.style.cursor = '';
-            }
-          }}
-          onMouseMove={handleMapMove}
-        >
-          <NavigationControl position="top-right" visualizePitch />
-          <FullscreenControl position="top-right" />
-
-          {riverData ? (
-            <Source id="rivers" type="geojson" data={riverData}>
-              <Layer {...riverGlowLayer} filter={getPresetFilter(activePresetId)} />
-              <Layer {...riverMainLayer} filter={getPresetFilter(activePresetId)} />
-              <Layer
-                {...highlightHaloLayer}
-                filter={['==', ['get', 'riverId'], highlightedRiverId]}
-              />
-              <Layer
-                {...highlightLineLayer}
-                filter={['==', ['get', 'riverId'], highlightedRiverId]}
-              />
-            </Source>
-          ) : null}
-
-          {selectedPopup ? (
-            <Popup
-              anchor="bottom"
-              closeButton={false}
-              closeOnClick={false}
-              longitude={selectedPopup.coordinates[0]}
-              latitude={selectedPopup.coordinates[1]}
-              offset={18}
+      <main className="map-workspace">
+        <div className="map-frame">
+          <div className="map-stage">
+            <Map
+              ref={mapRef}
+              initialViewState={{
+                longitude: jamaicaCenter[0],
+                latitude: jamaicaCenter[1],
+                zoom: 8
+              }}
+              maxBounds={jamaicaNavigationBounds}
+              minZoom={mapMinZoom}
+              renderWorldCopies={false}
+              mapStyle={mapStyleUrl}
+              interactiveLayerIds={['river-main']}
+              onClick={handleMapClick}
+              onLoad={() => {
+                setIsMapReady(true);
+              }}
+              onMouseLeave={() => {
+                setHoveredRiverId(null);
+                const canvas = mapRef.current?.getCanvas();
+                if (canvas) {
+                  canvas.style.cursor = '';
+                }
+              }}
+              onMouseMove={handleMapMove}
             >
-              <div className="popup-card">
-                <p className="popup-label">Selected segment</p>
-                <h3>River ID {selectedPopup.river.riverId}</h3>
-                <dl>
-                  <div>
-                    <dt>Segment</dt>
-                    <dd>{selectedPopup.river.segmentNumber}</dd>
-                  </div>
-                  <div>
-                    <dt>Length</dt>
-                    <dd>{selectedPopup.river.lengthKm.toFixed(2)} km</dd>
-                  </div>
-                  <div>
-                    <dt>ID code</dt>
-                    <dd>{selectedPopup.river.idCode}</dd>
-                  </div>
-                </dl>
-              </div>
-            </Popup>
-          ) : null}
-        </Map>
+              <NavigationControl position="top-right" visualizePitch />
+              <FullscreenControl position="top-right" />
 
-        <div className="map-legend">
-          <span>Short tributaries</span>
-          <i />
-          <strong>Long channels</strong>
+              {riverData ? (
+                <Source id="rivers" type="geojson" data={riverData}>
+                  <Layer
+                    {...riverGlowLayer}
+                    filter={getPresetFilter(activePresetId)}
+                  />
+                  <Layer
+                    {...riverMainLayer}
+                    filter={getPresetFilter(activePresetId)}
+                  />
+                  <Layer
+                    {...highlightHaloLayer}
+                    filter={['==', ['get', 'riverId'], highlightedRiverId]}
+                  />
+                  <Layer
+                    {...highlightLineLayer}
+                    filter={['==', ['get', 'riverId'], highlightedRiverId]}
+                  />
+                </Source>
+              ) : null}
+
+              {selectedPopup ? (
+                <Popup
+                  anchor="bottom"
+                  closeButton={false}
+                  closeOnClick={false}
+                  longitude={selectedPopup.coordinates[0]}
+                  latitude={selectedPopup.coordinates[1]}
+                  offset={18}
+                >
+                  <div className="popup-card">
+                    <p className="popup-label">Selected segment</p>
+                    <h3>River ID {selectedPopup.river.riverId}</h3>
+                    <dl>
+                      <div>
+                        <dt>Segment</dt>
+                        <dd>{selectedPopup.river.segmentNumber}</dd>
+                      </div>
+                      <div>
+                        <dt>Length</dt>
+                        <dd>{selectedPopup.river.lengthKm.toFixed(2)} km</dd>
+                      </div>
+                      <div>
+                        <dt>ID code</dt>
+                        <dd>{selectedPopup.river.idCode}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </Popup>
+              ) : null}
+            </Map>
+
+          </div>
         </div>
-      </div>
+
+        <div className="map-footer">
+          <div className="map-legend">
+            <span>Short tributaries</span>
+            <i />
+            <strong>Long channels</strong>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
