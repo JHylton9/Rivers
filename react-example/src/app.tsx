@@ -440,11 +440,14 @@ export default function App() {
               ) : null}
             </Map>
 
-            <div className="map-legend">
-              <span>Short tributaries</span>
-              <i />
-              <strong>Long channels</strong>
-            </div>
+          </div>
+        </div>
+
+        <div className="map-footer">
+          <div className="map-legend">
+            <span>Short tributaries</span>
+            <i />
+            <strong>Long channels</strong>
           </div>
         </div>
       </main>
