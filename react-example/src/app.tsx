@@ -91,8 +91,8 @@ const jamaicaNavigationBounds = [
   [jamaicaBounds[2] + 4.5, jamaicaBounds[3] + 3.5]
 ] as const;
 const jamaicaResetInset = {
-  latitude: 0.42,
-  longitude: 0.62
+  latitude: 0.16,
+  longitude: 0.2
 } as const;
 
 function getMapPadding() {
@@ -116,7 +116,7 @@ function getJamaicaFitOffset() {
     return [0, 0] as const;
   }
 
-  return [-104, 18] as const;
+  return [-96, 32] as const;
 }
 
 function getJamaicaFitBounds(summary: RiverSummary) {
@@ -193,6 +193,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapMinZoom, setMapMinZoom] = useState(5.8);
   const [riverData, setRiverData] = useState<RiverFeatureCollection | null>(null);
   const [summary, setSummary] = useState<RiverSummary | null>(null);
   const [hoveredRiverId, setHoveredRiverId] = useState<number | null>(null);
@@ -253,10 +254,23 @@ export default function App() {
     }
 
     map.resize();
-    map.fitBounds(getJamaicaFitBounds(summary), {
-      duration,
+
+    const resetCamera = map.cameraForBounds(getJamaicaFitBounds(summary), {
       offset: getJamaicaFitOffset(),
       padding: getMapPadding()
+    });
+
+    if (!resetCamera?.center || resetCamera.zoom === undefined) {
+      return;
+    }
+
+    map.setMinZoom(resetCamera.zoom);
+    setMapMinZoom(resetCamera.zoom);
+
+    map.easeTo({
+      center: resetCamera.center,
+      duration,
+      zoom: resetCamera.zoom
     });
   }, [summary]);
 
@@ -335,7 +349,7 @@ export default function App() {
             zoom: 8
           }}
           maxBounds={jamaicaNavigationBounds}
-          minZoom={4.75}
+          minZoom={mapMinZoom}
           renderWorldCopies={false}
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}
