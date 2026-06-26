@@ -13,7 +13,7 @@ export const viewPresets = [
   {
     id: 'all',
     label: 'Full network',
-    description: 'Every river segment from the source shapefile.'
+    description: 'View every mapped river segment across the island.'
   },
   {
     id: 'major',
