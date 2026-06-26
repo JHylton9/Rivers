@@ -90,6 +90,10 @@ const jamaicaNavigationBounds = [
   [jamaicaBounds[0] - 4.5, jamaicaBounds[1] - 3.5],
   [jamaicaBounds[2] + 4.5, jamaicaBounds[3] + 3.5]
 ] as const;
+const jamaicaResetInset = {
+  latitude: 0.2,
+  longitude: 0.34
+} as const;
 
 function getMapPadding() {
   if (window.innerWidth < 900) {
@@ -109,8 +113,14 @@ function getSelectionPadding() {
 
 function getJamaicaFitBounds(summary: RiverSummary) {
   return [
-    [summary.bounds[0], summary.bounds[1]],
-    [summary.bounds[2], summary.bounds[3]]
+    [
+      summary.bounds[0] - jamaicaResetInset.longitude,
+      summary.bounds[1] - jamaicaResetInset.latitude
+    ],
+    [
+      summary.bounds[2] + jamaicaResetInset.longitude,
+      summary.bounds[3] + jamaicaResetInset.latitude
+    ]
   ] as const;
 }
 
@@ -316,7 +326,7 @@ export default function App() {
             zoom: 8
           }}
           maxBounds={jamaicaNavigationBounds}
-          minZoom={5.8}
+          minZoom={5.15}
           renderWorldCopies={false}
           mapStyle={mapStyleUrl}
           interactiveLayerIds={['river-main']}
