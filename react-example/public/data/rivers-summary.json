@@ -1,0 +1,98 @@
+{
+  "generatedAt": "2026-06-26T00:15:45.740Z",
+  "sourceProjection": "Jamaica Grid (Lambert Conformal Conic)",
+  "featureCount": 2953,
+  "totalLengthKm": 4570.559,
+  "averageLengthKm": 1.548,
+  "bounds": [
+    -78.348454,
+    17.757486,
+    -76.196512,
+    18.521657
+  ],
+  "center": [
+    -77.272483,
+    18.139572
+  ],
+  "lengthBuckets": {
+    "under1km": 1582,
+    "from1to2_5km": 712,
+    "from2_5to5km": 501,
+    "from5to10km": 147,
+    "over10km": 11
+  },
+  "longestSegments": [
+    {
+      "riverId": 9049,
+      "segmentNumber": 190,
+      "idCode": 103,
+      "lengthKm": 18.303
+    },
+    {
+      "riverId": 9475,
+      "segmentNumber": 616,
+      "idCode": 103,
+      "lengthKm": 13.767
+    },
+    {
+      "riverId": 8943,
+      "segmentNumber": 84,
+      "idCode": 103,
+      "lengthKm": 13.662
+    },
+    {
+      "riverId": 9382,
+      "segmentNumber": 523,
+      "idCode": 103,
+      "lengthKm": 12.88
+    },
+    {
+      "riverId": 8899,
+      "segmentNumber": 40,
+      "idCode": 103,
+      "lengthKm": 12.471
+    },
+    {
+      "riverId": 9618,
+      "segmentNumber": 759,
+      "idCode": 103,
+      "lengthKm": 11.389
+    },
+    {
+      "riverId": 11319,
+      "segmentNumber": 1569,
+      "idCode": 104,
+      "lengthKm": 10.856
+    },
+    {
+      "riverId": 9275,
+      "segmentNumber": 416,
+      "idCode": 103,
+      "lengthKm": 10.837
+    },
+    {
+      "riverId": 9460,
+      "segmentNumber": 601,
+      "idCode": 103,
+      "lengthKm": 10.628
+    },
+    {
+      "riverId": 10744,
+      "segmentNumber": 2353,
+      "idCode": 103,
+      "lengthKm": 10.363
+    },
+    {
+      "riverId": 8909,
+      "segmentNumber": 50,
+      "idCode": 103,
+      "lengthKm": 10.061
+    },
+    {
+      "riverId": 9478,
+      "segmentNumber": 619,
+      "idCode": 103,
+      "lengthKm": 9.779
+    }
+  ]
+}
